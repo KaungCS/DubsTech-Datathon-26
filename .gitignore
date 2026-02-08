@@ -1,3 +1,4 @@
 # Model artifacts
 models/*.pkl
 models/*.joblib
+models/violation_predictor.pkl
