@@ -161,7 +161,7 @@ def train_model(
             "min_label_count": min_label_count,
         },
         model_path,
-        compress=5,
+        compress=9,
     )
 
     print("Model and encoder saved successfully!")
