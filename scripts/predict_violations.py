@@ -4,7 +4,6 @@ import joblib
 import pandas as pd
 
 from web_scraper import scrape_metadata
-from train_model import train_model
 
 
 VIOLATION_IMPACTS = {
@@ -172,13 +171,6 @@ def predict_violations(
     script_dir = Path(__file__).resolve().parent
     if model_path is None:
         model_path = script_dir / ".." / "models" / "violation_predictor.pkl"
-
-    if not Path(model_path).exists():
-        train_model(
-            cleaned_path=script_dir / ".." / "data" / "processed" / "cleaned_dataset.csv",
-            model_path=model_path,
-            summary_only=True,
-        )
 
     bundle = joblib.load(model_path)
     pipeline = bundle["pipeline"]
