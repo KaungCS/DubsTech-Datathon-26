@@ -57,17 +57,18 @@ def train_model(
     y, frequent_labels = collapse_rare_labels(y, min_label_count)
 
     word_vectorizer = TfidfVectorizer(
-        max_features=30000,
+        max_features=10000,
         ngram_range=(1, 2),
-        min_df=2,
+        min_df=3,
         max_df=0.9,
         sublinear_tf=True,
     )
     char_vectorizer = TfidfVectorizer(
         analyzer="char",
-        ngram_range=(3, 5),
-        min_df=2,
+        ngram_range=(3, 4),
+        min_df=3,
         max_df=0.9,
+        max_features=5000,
         sublinear_tf=True,
     )
 
