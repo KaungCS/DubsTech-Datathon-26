@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessibility Violation Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* --- NEW DESIGN SYSTEM (Cyberpunk/Glass) --- */
+    :root {
+        --bg-color: #0f0c29;
+        --card-bg: rgba(255, 255, 255, 0.05);
+        --accent-color: #b0fb5d; /* Neon Green */
+        --highlight-blue: #0ea5e9;
+        --error-color: #ff4757;
+        --text-color: #e0e6ed;
+        --secondary-text: #a0aab5;
+        --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    body {
+        margin: 0;
+        font-family: 'Inter', sans-serif;
+        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        color: var(--text-color);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+    }
+
+    /* Layout */
+    .container {
+        width: 100%;
+        max-width: 800px;
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    h1 {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 2.5rem;
+        margin: 0;
+        background: linear-gradient(to right, #fff, var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 20px rgba(176, 251, 93, 0.3);
+    }
+
+    .subtitle {
+        color: var(--secondary-text);
+        margin-top: 10px;
+        font-size: 1.1rem;
+        line-height: 1.5;
+    }
+
+    /* Glassmorphism Card */
+    .form-section {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        border: var(--glass-border);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        margin-bottom: 30px;
+        transition: transform 0.2s;
+    }
+
+    .form-section:hover {
+        transform: translateY(-2px);
+    }
+
+    .form-group {
+        display: flex;
+        gap: 15px;
+    }
+
+    input[type="url"] {
+        flex: 1;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        padding: 15px;
+        border-radius: 8px;
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.3s;
+    }
+
+    input[type="url"]:focus {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 10px rgba(176, 251, 93, 0.2);
+    }
+
+    button {
+        background: var(--accent-color);
+        color: #0f0c29;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s;
+    }
+
+    button:hover {
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(176, 251, 93, 0.5);
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Results */
+    .results-section {
+        display: none; /* Hidden by default per your logic */
+    }
+    
+    .results-section.active {
+        display: block;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    #resultUrl {
+        display: block;
+        margin-bottom: 20px;
+        color: var(--secondary-text);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    #resultCategory {
+      display: block;
+      margin-top: -12px;
+      margin-bottom: 20px;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    .result-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-left: 4px solid var(--accent-color);
+        border-radius: 0 8px 8px 0;
+        padding: 20px;
+        margin-bottom: 15px;
+        animation: slideIn 0.5s ease-out forwards;
+    }
+
+    .result-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 10px;
+    }
+
+    .violation-label {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .confidence-score {
+        font-family: 'JetBrains Mono', monospace;
+        background: rgba(176, 251, 93, 0.1);
+        color: var(--accent-color);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+
+    .affected-users h4 {
+        margin: 0 0 8px 0;
+        font-size: 0.9rem;
+        color: var(--secondary-text);
+        text-transform: uppercase;
+    }
+
+    .affected-users ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #e0e6ed;
+    }
+
+    .affected-users li {
+        margin-bottom: 4px;
+    }
+
+    /* Priors Section (Missing in my previous version, added back now) */
+    .priors-section {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .priors-section h3 {
+        font-family: 'JetBrains Mono', monospace;
+        color: var(--accent-color);
+        font-size: 1.1rem;
+        margin-bottom: 20px;
+    }
+
+    .prior-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255,255,255,0.02);
+        padding: 12px 20px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .prior-name {
+        color: #fff;
+        font-weight: 500;
+    }
+
+    .prior-stats {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.9rem;
+        color: var(--secondary-text);
+    }
+
+    .prior-percentage {
+        color: var(--accent-color);
+        font-weight: bold;
+    }
+
+    /* Loading & Error */
+    .loading {
+        display: none;
+        text-align: center;
+        margin-top: 20px;
+        color: var(--accent-color);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .loading.active { display: block; }
+
+    .error-message {
+        background: rgba(255, 71, 87, 0.1);
+        border: 1px solid var(--error-color);
+        color: var(--error-color);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+        display: none;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .error-message.active { display: block; }
+
+    /* Animations */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    .spinner {
+        display: inline-block;
+        width: 16px; height: 16px;
+        border: 2px solid var(--accent-color);
+        border-top-color: transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+    }
+
+    @media (max-width: 600px) {
+        .form-group { flex-direction: column; }
+        .prior-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+        .prior-stats { width: 100%; justify-content: space-between; }
+    }
+  </style>
+</head>
+<body>
+
+  <a href="/" style="position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: rgba(138, 43, 226, 0.3); border: 1px solid rgba(138, 43, 226, 0.6); border-radius: 8px; color: rgba(255, 255, 255, 0.9); text-decoration: none; font-size: 0.95rem; font-weight: 600; transition: all 0.3s ease; z-index: 1000;" onmouseover="this.style.background='rgba(138, 43, 226, 0.5)'; this.style.borderColor='rgba(138, 43, 226, 0.9)'; this.style.transform='translateY(-2px)';" onmouseout="this.style.background='rgba(138, 43, 226, 0.3)'; this.style.borderColor='rgba(138, 43, 226, 0.6)'; this.style.transform='translateY(0)';">📊 View Analytics</a>
+
+  <div class="container">
+    <header>
+      <h1>iShowIssues</h1>
+      <img src="https://cdn.discordapp.com/attachments/1469759224123887921/1469933487673835592/images-800x300.jpg?ex=698975bd&is=6988243d&hm=849a40df9a91b131bf32f27e53f1036fe702374429d4d32f7790c3518dcf3fb4&" alt="iShowSpeed + Caseoh">
+      <p class="subtitle">
+        Dataset‑driven accessibility insights for any website.<br>
+        Enter a custom URL to predict likely violations and the user groups most impacted.
+      </p>
+    </header>
+
+    <div class="form-section">
+      <form id="predictionForm">
+        <div class="form-group">
+          <input 
+            type="url" 
+            id="urlInput" 
+            placeholder="Enter website URL (e.g., https://example.gov)"
+            required
+            autocomplete="off"
+          >
+          <button type="submit" id="predictBtn">Analyze</button>
+        </div>
+      </form>
+      
+      <div class="loading" id="loadingState">
+        <span class="spinner"></span> Analyzing domain architecture...
+      </div>
+      <div class="error-message" id="errorMessage"></div>
+    </div>
+
+    <div class="results-section" id="resultsSection">
+      <span id="resultUrl"></span>
+      <span id="resultCategory"></span>
+      
+      <div id="predictionResults">
+        </div>
+
+      <div class="priors-section" id="priorsContainer" style="display: none;">
+        <h3 id="priorsTitle">Common Issues for this Category</h3>
+        <div id="priorsList">
+            </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('predictionForm');
+    const urlInput = document.getElementById('urlInput');
+    const predictBtn = document.getElementById('predictBtn');
+    const loadingState = document.getElementById('loadingState');
+    const resultsSection = document.getElementById('resultsSection');
+    const errorMessage = document.getElementById('errorMessage');
+    const predictionResults = document.getElementById('predictionResults');
+    const priorsContainer = document.getElementById('priorsContainer');
+    const priorsList = document.getElementById('priorsList');
+    const priorsTitle = document.getElementById('priorsTitle');
+    const resultUrl = document.getElementById('resultUrl');
+    const resultCategory = document.getElementById('resultCategory');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const url = urlInput.value.trim();
+      if (!url) return;
+
+      // Clear previous states
+      errorMessage.classList.remove('active');
+      resultsSection.classList.remove('active');
+      predictionResults.innerHTML = '';
+      priorsList.innerHTML = '';
+      resultCategory.textContent = '';
+      priorsTitle.textContent = 'Common Issues for this Category';
+
+      // Show loading
+      loadingState.classList.add('active');
+      predictBtn.disabled = true;
+
+      try {
+        // KEEPING YOUR EXACT ENDPOINT
+        const response = await fetch('/api/predict', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ url })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to analyze website');
+        }
+
+        // Display results
+        resultUrl.textContent = `Analysis Results for: ${data.url}`;
+        resultCategory.textContent = data.domain_category
+          ? `Domain Category: ${data.domain_category}`
+          : 'Domain Category: Unknown';
+        displayPredictions(data.predictions);
+        
+        if (data.priors && data.priors.length > 0) {
+          priorsTitle.textContent = data.domain_category
+            ? `Common Issues for this Category: ${data.domain_category}`
+            : 'Common Issues for this Category';
+          displayPriors(data.priors);
+          priorsContainer.style.display = 'block';
+        }
+
+        resultsSection.classList.add('active');
+        loadingState.classList.remove('active');
+
+      } catch (error) {
+        showError(error.message);
+        loadingState.classList.remove('active');
+      } finally {
+        predictBtn.disabled = false;
+      }
+    });
+
+    function displayPredictions(predictions) {
+      // Using escapeHtml helper from your code to prevent XSS
+      predictionResults.innerHTML = predictions.map((pred, idx) => `
+        <div class="result-card" style="animation-delay: ${idx * 100}ms;">
+          <div class="result-header">
+            <div class="violation-label">${escapeHtml(pred.label)}</div>
+            <div class="confidence-score">${(pred.score * 100).toFixed(1)}% Confidence</div>
+          </div>
+          <div class="affected-users">
+            <h4>Users Affected:</h4>
+            <ul>
+              ${pred.affected_users.map(user => 
+                `<li>${escapeHtml(user)}</li>`
+              ).join('')}
+            </ul>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function displayPriors(priors) {
+      priorsList.innerHTML = priors.map(prior => `
+        <div class="prior-item">
+          <span class="prior-name">${escapeHtml(prior.name)}</span>
+          <div class="prior-stats">
+            <span>${prior.count} occurrences</span>
+            <div class="prior-percentage">${prior.share}% share</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showError(message) {
+      errorMessage.textContent = `Error: ${message}`;
+      errorMessage.classList.add('active');
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return text.toString().replace(/[&<>"']/g, m => map[m]);
+    }
+  </script>
+
+</body>
+</html>
