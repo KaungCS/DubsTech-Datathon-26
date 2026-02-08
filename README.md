@@ -89,10 +89,10 @@ Optional prediction flags:
 
 # Evaluation Metrics
 Bootstrap confidence intervals (95% CI):
-- Accuracy: 0.886 +/- 0.011 (0.875, 0.896)
-- Top-3 accuracy: 0.977 +/- 0.005 (0.972, 0.982)
+- Accuracy: 0.892 +/- 0.011 (0.881, 0.903)
+- Top-3 accuracy: 0.982 +/- 0.004 (0.977, 0.986)
 
 Reproduce:
 ```bash
-python scripts/evaluate_model.py --bootstrap --n-boot 1000 --alpha 0.05
+python3 scripts/evaluate_model.py --bootstrap --n-boot 1000 --alpha 0.05
 ```
